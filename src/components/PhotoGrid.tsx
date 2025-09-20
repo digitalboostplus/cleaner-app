@@ -69,15 +69,15 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between lg:items-center lg:gap-6">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Photo Library ({photos.length} photos)
           </h2>
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          <div className="flex w-full flex-wrap items-stretch overflow-hidden rounded-lg border border-gray-200 sm:w-auto">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-4 py-2 text-sm transition-colors ${
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors sm:flex-none ${
                 viewMode === 'grid'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -87,7 +87,7 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
             </button>
             <button
               onClick={() => setViewMode('duplicates')}
-              className={`px-4 py-2 text-sm transition-colors ${
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors sm:flex-none ${
                 viewMode === 'duplicates'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -97,11 +97,11 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
             </button>
           </div>
         </div>
-        
+
         {selectedPhotos.size > 0 && (
           <button
             onClick={handleBatchDelete}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 sm:w-auto"
           >
             <Trash2 className="w-4 h-4" />
             Delete Selected ({selectedPhotos.size})
@@ -110,7 +110,7 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
       </div>
 
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {photos.map((photo) => (
             <div
               key={photo.id}
@@ -184,21 +184,21 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
             </div>
           ) : (
             Object.entries(groupedPhotos).map(([group, groupPhotos]) => (
-              <div key={group} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
+              <div key={group} className="rounded-lg border p-4 sm:p-5">
+                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Copy className="w-5 h-5 text-orange-500" />
                     Duplicate Group ({groupPhotos.length} photos)
                   </h3>
                   <button
                     onClick={() => handleCompareGroup(groupPhotos)}
-                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto"
                   >
                     <Eye className="w-4 h-4" />
                     Compare
                   </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
                   {groupPhotos.map((photo) => (
                     <div
                       key={photo.id}

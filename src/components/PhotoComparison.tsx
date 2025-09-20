@@ -48,10 +48,10 @@ export default function PhotoComparison({ photos, onClose, onPhotoDeleted }: Pho
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+      <div className="flex w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-xl max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-gray-900">Photo Comparison</h2>
             <span className="text-sm text-gray-600">
@@ -60,15 +60,15 @@ export default function PhotoComparison({ photos, onClose, onPhotoDeleted }: Pho
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Main comparison area */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Current photo */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
@@ -110,18 +110,18 @@ export default function PhotoComparison({ photos, onClose, onPhotoDeleted }: Pho
                   )}
                 </div>
               </div>
-              
-              <div className="flex gap-2">
+
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <button
                   onClick={() => handleDelete(currentPhoto)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 sm:flex-1"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
                 <button
                   onClick={() => setSelectedPhoto(currentPhoto)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 sm:flex-1"
                 >
                   <Heart className="w-4 h-4" />
                   Keep
@@ -171,18 +171,18 @@ export default function PhotoComparison({ photos, onClose, onPhotoDeleted }: Pho
                     )}
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
+
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <button
                     onClick={() => handleDelete(nextPhoto)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 sm:flex-1"
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
                   </button>
                   <button
                     onClick={() => setSelectedPhoto(nextPhoto)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 sm:flex-1"
                   >
                     <Heart className="w-4 h-4" />
                     Keep
@@ -193,25 +193,25 @@ export default function PhotoComparison({ photos, onClose, onPhotoDeleted }: Pho
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <ArrowLeft className="w-4 h-4" />
               Previous
             </button>
-            
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+
+            <div className="flex items-center justify-center gap-2 text-center text-sm text-gray-600">
               <Info className="w-4 h-4" />
               <span>Compare photos side-by-side to choose which to keep</span>
             </div>
-            
+
             <button
               onClick={handleNext}
               disabled={currentIndex >= photos.length - 1}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Next
               <ArrowRight className="w-4 h-4" />
