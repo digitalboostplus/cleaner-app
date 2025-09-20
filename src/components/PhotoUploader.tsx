@@ -123,7 +123,7 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer sm:p-8 ${
           isDragging
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-300 hover:border-gray-400'
@@ -148,10 +148,10 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
               Upload Your Photos
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4 text-sm text-gray-600 sm:text-base">
               Drag and drop your photos here, or click to select files
             </p>
             
@@ -170,8 +170,8 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
             )}
           </div>
           
-          <div className="flex items-center gap-2">
-            <Upload className="w-5 h-5 text-gray-400" />
+          <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:text-left">
+            <Upload className="h-5 w-5 text-gray-400" />
             <span className="text-sm text-gray-500">
               Supports JPG, PNG, GIF, and other image formats
             </span>

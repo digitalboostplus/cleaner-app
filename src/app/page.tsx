@@ -40,23 +40,23 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="text-center mb-12">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Camera className="w-8 h-8 text-blue-600" />
-          <h1 className="text-4xl font-bold text-gray-800">Photo Cleaner</h1>
+    <div className="container mx-auto max-w-6xl px-4 py-6 sm:py-8">
+      <header className="mb-8 text-center sm:mb-12">
+        <div className="mb-4 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+          <Camera className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Photo Cleaner</h1>
         </div>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <p className="mx-auto max-w-2xl text-base text-gray-600 sm:text-lg">
           Clean up your photo library with AI-powered duplicate detection and smart organization
         </p>
       </header>
 
-      <nav className="flex justify-center gap-4 mb-8">
+      <nav className="mb-8 flex w-full max-w-3xl flex-wrap items-stretch justify-center gap-3 sm:gap-4">
         <button
           onClick={() => setCurrentView('upload')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-            currentView === 'upload' 
-              ? 'bg-blue-600 text-white' 
+          className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:px-6 sm:py-3 ${
+            currentView === 'upload'
+              ? 'bg-blue-600 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
         >
@@ -65,9 +65,9 @@ export default function Home() {
         </button>
         <button
           onClick={() => setCurrentView('grid')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-            currentView === 'grid' 
-              ? 'bg-blue-600 text-white' 
+          className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:px-6 sm:py-3 ${
+            currentView === 'grid'
+              ? 'bg-blue-600 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
           disabled={photos.length === 0}
@@ -77,9 +77,9 @@ export default function Home() {
         </button>
         <button
           onClick={() => setCurrentView('swipe')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-            currentView === 'swipe' 
-              ? 'bg-blue-600 text-white' 
+          className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:px-6 sm:py-3 ${
+            currentView === 'swipe'
+              ? 'bg-blue-600 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
           disabled={photos.length === 0}
@@ -89,9 +89,9 @@ export default function Home() {
         </button>
         <button
           onClick={() => setCurrentView('stats')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-            currentView === 'stats' 
-              ? 'bg-blue-600 text-white' 
+          className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:w-auto sm:px-6 sm:py-3 ${
+            currentView === 'stats'
+              ? 'bg-blue-600 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
         >
@@ -100,7 +100,7 @@ export default function Home() {
         </button>
       </nav>
 
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="rounded-xl bg-white p-4 shadow-lg sm:p-6">
         <ClientOnly>
           {isAnalyzing && (
             <div className="mb-6 bg-blue-50 p-4 rounded-lg">
