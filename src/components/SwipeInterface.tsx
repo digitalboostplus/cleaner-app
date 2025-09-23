@@ -15,12 +15,33 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
   const [currentIndex, setCurrentIndex] = useState(0)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [recentlyDeleted, setRecentlyDeleted] = useState<Photo[]>([])
-  const [isMounted, setIsMounted] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+  const previousPhotoIdsRef = useRef<string[]>([])
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    const previousIds = previousPhotoIdsRef.current
+    const currentIds = photos.map(photo => photo.id)
+    const hasOverlap = currentIds.some(id => previousIds.includes(id))
+
+    if (photos.length === 0) {
+      setCurrentIndex(0)
+      setRecentlyDeleted([])
+    } else {
+      setCurrentIndex(prevIndex => {
+        const maxIndex = Math.max(photos.length - 1, 0)
+        if (!hasOverlap) {
+          return 0
+        }
+        return prevIndex > maxIndex ? maxIndex : prevIndex
+      })
+
+      if (!hasOverlap) {
+        setRecentlyDeleted([])
+      }
+    }
+
+    previousPhotoIdsRef.current = currentIds
+  }, [photos])
 
   const currentPhoto = photos[currentIndex]
   const nextPhoto = photos[currentIndex + 1]
@@ -29,16 +50,21 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
     if (!currentPhoto) return
 
     setSwipeDirection(direction)
-    
+
     if (direction === 'left') {
       // Delete photo
       onPhotoDeleted(currentPhoto.id)
       setRecentlyDeleted(prev => [...prev, currentPhoto].slice(-10)) // Keep last 10 deleted
     }
-    
+
     // Move to next photo
     setTimeout(() => {
-      setCurrentIndex(prev => prev + 1)
+      setCurrentIndex(prev => {
+        if (direction === 'left') {
+          return prev
+        }
+        return prev + 1
+      })
       setSwipeDirection(null)
     }, 300)
   }
@@ -132,7 +158,7 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
             ref={cardRef}
             className="absolute inset-0 bg-white rounded-xl shadow-lg overflow-hidden cursor-grab active:cursor-grabbing"
             drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
+            dragConstraints={{ left: -250, right: 250 }}
             onDragEnd={handleDragEnd}
             animate={{
               x: swipeDirection === 'left' ? -400 : swipeDirection === 'right' ? 400 : 0,
