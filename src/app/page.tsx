@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Camera, Trash2, Sparkles, BarChart3 } from 'lucide-react'
 import PhotoUploader from '@/components/PhotoUploader'
 import PhotoGrid from '@/components/PhotoGrid'
@@ -9,16 +9,21 @@ import StatsPanel from '@/components/StatsPanel'
 import { Photo } from '@/types'
 import { usePhotoAnalysis } from '@/hooks/usePhotoAnalysis'
 import ClientOnly from '@/components/ClientOnly'
+import { revokeObjectUrl } from '@/lib/objectUrlRegistry'
 
 export default function Home() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [currentView, setCurrentView] = useState<'upload' | 'grid' | 'swipe' | 'stats'>('upload')
   const [processedCount, setProcessedCount] = useState(0)
   const [spaceSaved, setSpaceSaved] = useState(0)
-  
+
+  const previousBatchRef = useRef<Photo[]>([])
+  const latestPhotosRef = useRef<Photo[]>(photos)
+
   const { duplicates, isAnalyzing, progress, getAllDuplicates, getSpaceSavings } = usePhotoAnalysis(photos)
 
   const handlePhotosUploaded = (newPhotos: Photo[]) => {
+    previousBatchRef.current = photos
     setPhotos(newPhotos)
     setCurrentView('grid')
   }
@@ -26,11 +31,32 @@ export default function Home() {
   const handlePhotoDeleted = (photoId: string) => {
     const deletedPhoto = photos.find(p => p.id === photoId)
     if (deletedPhoto) {
+      revokeObjectUrl(deletedPhoto.url)
       setSpaceSaved(prev => prev + deletedPhoto.size)
     }
     setPhotos(prev => prev.filter(p => p.id !== photoId))
     setProcessedCount(prev => prev + 1)
   }
+
+  useEffect(() => {
+    return () => {
+      if (previousBatchRef.current.length > 0) {
+        previousBatchRef.current.forEach(photo => revokeObjectUrl(photo.url))
+        previousBatchRef.current = []
+      }
+    }
+  }, [photos])
+
+  useEffect(() => {
+    latestPhotosRef.current = photos
+  }, [photos])
+
+  useEffect(() => {
+    return () => {
+      latestPhotosRef.current.forEach(photo => revokeObjectUrl(photo.url))
+      latestPhotosRef.current = []
+    }
+  }, [])
 
   const stats = {
     totalPhotos: photos.length,

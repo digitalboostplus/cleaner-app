@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import { Upload, Camera, AlertCircle, Folder, Clipboard } from 'lucide-react'
 import { Photo } from '@/types'
 import { DevicePhotoManager, loadPhotosFromClipboard, isDevicePhotoAccessSupported } from '@/lib/devicePhotos'
+import { registerObjectUrl } from '@/lib/objectUrlRegistry'
 import ClientOnly from './ClientOnly'
 
 interface PhotoUploaderProps {
@@ -39,6 +40,7 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
         }
 
         const url = URL.createObjectURL(file)
+        registerObjectUrl(url)
         const photo: Photo = {
           id: `${Date.now()}-${i}`,
           name: file.name,

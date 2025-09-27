@@ -1,4 +1,5 @@
 import { Photo } from '@/types'
+import { registerObjectUrl } from './objectUrlRegistry'
 
 export class DevicePhotoManager {
   private fileSystemHandle: FileSystemDirectoryHandle | null = null
@@ -52,6 +53,7 @@ export class DevicePhotoManager {
             
             if (supportedTypes.includes(file.type)) {
               const url = URL.createObjectURL(file)
+              registerObjectUrl(url)
               const photo: Photo = {
                 id: `device-${Date.now()}-${Math.random()}`,
                 name: file.name,
@@ -109,6 +111,7 @@ export async function loadPhotosFromClipboard(): Promise<Photo[]> {
           const blob = await clipboardItem.getType(type)
           const file = new File([blob], `clipboard-${Date.now()}.${type.split('/')[1]}`, { type })
           const url = URL.createObjectURL(file)
+          registerObjectUrl(url)
           
           const photo: Photo = {
             id: `clipboard-${Date.now()}-${Math.random()}`,
