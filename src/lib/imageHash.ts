@@ -97,51 +97,48 @@ export class ImageHasher {
 }
 
 export function findDuplicates(photos: Photo[]): Photo[] {
-  const hasher = new ImageHasher()
   const duplicates: Photo[] = []
   const processed = new Set<string>()
-  
+
   for (let i = 0; i < photos.length; i++) {
-    if (processed.has(photos[i].id)) continue
-    
     const currentPhoto = photos[i]
-    const group: Photo[] = [currentPhoto]
-    
-    // Find similar photos
+    if (!currentPhoto || processed.has(currentPhoto.id)) {
+      continue
+    }
+
+    const matchedPhotos: Photo[] = []
+
     for (let j = i + 1; j < photos.length; j++) {
-      if (processed.has(photos[j].id)) continue
-      
       const comparePhoto = photos[j]
-      
-      // Check file size similarity (within 10%)
-      const sizeDiff = Math.abs(currentPhoto.size - comparePhoto.size) / currentPhoto.size
-      if (sizeDiff < 0.1) {
-        group.push(comparePhoto)
-        processed.add(comparePhoto.id)
+      if (!comparePhoto || processed.has(comparePhoto.id)) {
+        continue
       }
-      
-      // Check file name similarity
-      if (currentPhoto.name === comparePhoto.name) {
-        group.push(comparePhoto)
+
+      const sizeBaseline = Math.max(currentPhoto.size, comparePhoto.size) || 1
+      const sizeDiff = Math.abs(currentPhoto.size - comparePhoto.size) / sizeBaseline
+      const isSizeMatch = sizeDiff < 0.1
+      const isNameMatch = currentPhoto.name === comparePhoto.name
+
+      if (isSizeMatch || isNameMatch) {
+        matchedPhotos.push(comparePhoto)
         processed.add(comparePhoto.id)
       }
     }
-    
-    if (group.length > 1) {
-      // Mark all but the first as duplicates
-      const groupId = `group-${Date.now()}-${Math.random()}`
-      group.forEach((photo, index) => {
-        if (index > 0) {
-          photo.isDuplicate = true
-          photo.group = groupId
-          duplicates.push(photo)
-        }
+
+    if (matchedPhotos.length > 0) {
+      const groupId = `group-${currentPhoto.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      matchedPhotos.forEach(photo => {
+        duplicates.push({
+          ...photo,
+          isDuplicate: true,
+          group: groupId,
+        })
       })
     }
-    
+
     processed.add(currentPhoto.id)
   }
-  
+
   return duplicates
 }
 
@@ -181,23 +178,27 @@ export async function findSimilarPhotos(photos: Photo[], threshold: number = 0.8
       const similarity = hasher.calculateSimilarity(currentHash, compareHash)
       
       if (similarity >= threshold) {
-        comparePhoto.similarityScore = similarity
-        group.push(comparePhoto)
+        group.push({
+          ...comparePhoto,
+          similarityScore: similarity,
+        })
         processed.add(comparePhoto.id)
       }
     }
-    
+
     if (group.length > 1) {
       const groupId = `similar-${Date.now()}-${Math.random()}`
       group.forEach((photo, index) => {
         if (index > 0) {
-          photo.isDuplicate = true
-          photo.group = groupId
-          similar.push(photo)
+          similar.push({
+            ...photo,
+            isDuplicate: true,
+            group: groupId,
+          })
         }
       })
     }
-    
+
     processed.add(currentPhoto.id)
   }
   
