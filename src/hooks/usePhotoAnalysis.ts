@@ -20,14 +20,21 @@ export function usePhotoAnalysis(photos: Photo[]) {
     setProgress(0)
     
     try {
+      const sanitizedPhotos = photos.map(photo => ({
+        ...photo,
+        isDuplicate: undefined,
+        group: undefined,
+        similarityScore: undefined,
+      }))
+
       // Step 1: Find exact duplicates (fast)
       setProgress(25)
-      const exactDuplicates = findDuplicates(photos)
+      const exactDuplicates = findDuplicates(sanitizedPhotos)
       setDuplicates(exactDuplicates)
-      
+
       // Step 2: Find similar photos using perceptual hashing (slower)
       setProgress(50)
-      const similarPhotos = await findSimilarPhotos(photos, 0.85)
+      const similarPhotos = await findSimilarPhotos(sanitizedPhotos, 0.85)
       setSimilar(similarPhotos)
       
       setProgress(100)
