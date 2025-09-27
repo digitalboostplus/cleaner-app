@@ -131,10 +131,12 @@ export function findDuplicates(photos: Photo[]): Photo[] {
       // Mark all but the first as duplicates
       const groupId = `group-${Date.now()}-${Math.random()}`
       group.forEach((photo, index) => {
+        photo.group = groupId
         if (index > 0) {
           photo.isDuplicate = true
-          photo.group = groupId
           duplicates.push(photo)
+        } else {
+          photo.isDuplicate = false
         }
       })
     }
@@ -190,10 +192,12 @@ export async function findSimilarPhotos(photos: Photo[], threshold: number = 0.8
     if (group.length > 1) {
       const groupId = `similar-${Date.now()}-${Math.random()}`
       group.forEach((photo, index) => {
+        photo.group = groupId
         if (index > 0) {
           photo.isDuplicate = true
-          photo.group = groupId
           similar.push(photo)
+        } else {
+          photo.isDuplicate = false
         }
       })
     }
