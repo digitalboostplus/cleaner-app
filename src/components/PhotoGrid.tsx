@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { Trash2, Eye, Copy, Check, Camera } from 'lucide-react'
 import { Photo } from '@/types'
@@ -16,7 +16,7 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'grid' | 'duplicates'>('grid')
   const [showComparison, setShowComparison] = useState(false)
-  const [comparisonPhotos, setComparisonPhotos] = useState<Photo[]>([])
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -42,8 +42,8 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
     setSelectedPhotos(new Set())
   }
 
-  const handleCompareGroup = (groupPhotos: Photo[]) => {
-    setComparisonPhotos(groupPhotos)
+  const handleCompareGroup = (groupId: string) => {
+    setActiveGroupId(groupId)
     setShowComparison(true)
   }
 
@@ -57,6 +57,24 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
 
   const duplicatePhotos = photos.filter(photo => photo.isDuplicate)
   const uniquePhotos = photos.filter(photo => !photo.isDuplicate)
+  const activeComparisonPhotos = useMemo(() => {
+    if (!activeGroupId) {
+      return []
+    }
+
+    return photos.filter(
+      photo => photo.isDuplicate && (photo.group || 'ungrouped') === activeGroupId
+    )
+  }, [activeGroupId, photos])
+
+  useEffect(() => {
+    if (!showComparison) return
+
+    if (activeComparisonPhotos.length === 0) {
+      setShowComparison(false)
+      setActiveGroupId(null)
+    }
+  }, [activeComparisonPhotos, showComparison])
   
   const groupedPhotos = duplicatePhotos.reduce((acc, photo) => {
     const group = photo.group || 'ungrouped'
@@ -191,7 +209,7 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
                     Duplicate Group ({groupPhotos.length} photos)
                   </h3>
                   <button
-                    onClick={() => handleCompareGroup(groupPhotos)}
+                    onClick={() => handleCompareGroup(group)}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto"
                   >
                     <Eye className="w-4 h-4" />
@@ -243,10 +261,13 @@ export default function PhotoGrid({ photos, onPhotoDeleted }: PhotoGridProps) {
         </div>
       )}
       
-      {showComparison && (
+      {showComparison && activeGroupId && activeComparisonPhotos.length > 0 && (
         <PhotoComparison
-          photos={comparisonPhotos}
-          onClose={() => setShowComparison(false)}
+          photos={activeComparisonPhotos}
+          onClose={() => {
+            setShowComparison(false)
+            setActiveGroupId(null)
+          }}
           onPhotoDeleted={onPhotoDeleted}
         />
       )}
