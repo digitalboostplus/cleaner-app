@@ -23,13 +23,29 @@ export default function Home() {
     setCurrentView('grid')
   }
 
-  const handlePhotoDeleted = (photoId: string) => {
+  const handlePhotoDeleted = (photoId: string, _previousIndex?: number) => {
     const deletedPhoto = photos.find(p => p.id === photoId)
     if (deletedPhoto) {
       setSpaceSaved(prev => prev + deletedPhoto.size)
     }
     setPhotos(prev => prev.filter(p => p.id !== photoId))
     setProcessedCount(prev => prev + 1)
+  }
+
+  const handlePhotoRestored = (photo: Photo, insertIndex: number) => {
+    setPhotos(prev => {
+      if (prev.some(p => p.id === photo.id)) {
+        return prev
+      }
+
+      const next = [...prev]
+      const safeIndex = Math.min(Math.max(insertIndex, 0), next.length)
+      next.splice(safeIndex, 0, photo)
+      return next
+    })
+
+    setProcessedCount(prev => Math.max(0, prev - 1))
+    setSpaceSaved(prev => Math.max(0, prev - photo.size))
   }
 
   const stats = {
@@ -129,7 +145,11 @@ export default function Home() {
         )}
         {currentView === 'swipe' && (
           <ClientOnly fallback={<div className="h-96 bg-gray-50 rounded-lg animate-pulse"></div>}>
-            <SwipeInterface photos={photos} onPhotoDeleted={handlePhotoDeleted} />
+            <SwipeInterface
+              photos={photos}
+              onPhotoDeleted={handlePhotoDeleted}
+              onPhotoRestored={handlePhotoRestored}
+            />
           </ClientOnly>
         )}
         {currentView === 'stats' && (
