@@ -8,13 +8,19 @@ import { Photo } from '@/types'
 
 interface SwipeInterfaceProps {
   photos: Photo[]
-  onPhotoDeleted: (photoId: string) => void
+  onPhotoDeleted: (photoId: string, previousIndex?: number) => void
+  onPhotoRestored: (photo: Photo, insertIndex: number) => void
 }
 
-export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfaceProps) {
+interface RecentlyDeletedEntry {
+  photo: Photo
+  index: number
+}
+
+export default function SwipeInterface({ photos, onPhotoDeleted, onPhotoRestored }: SwipeInterfaceProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
-  const [recentlyDeleted, setRecentlyDeleted] = useState<Photo[]>([])
+  const [recentlyDeleted, setRecentlyDeleted] = useState<RecentlyDeletedEntry[]>([])
   const cardRef = useRef<HTMLDivElement>(null)
   const previousPhotoIdsRef = useRef<string[]>([])
 
@@ -25,7 +31,6 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
 
     if (photos.length === 0) {
       setCurrentIndex(0)
-      setRecentlyDeleted([])
     } else {
       setCurrentIndex(prevIndex => {
         const maxIndex = Math.max(photos.length - 1, 0)
@@ -53,8 +58,8 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
 
     if (direction === 'left') {
       // Delete photo
-      onPhotoDeleted(currentPhoto.id)
-      setRecentlyDeleted(prev => [...prev, currentPhoto].slice(-10)) // Keep last 10 deleted
+      onPhotoDeleted(currentPhoto.id, currentIndex)
+      setRecentlyDeleted(prev => [...prev, { photo: currentPhoto, index: currentIndex }].slice(-10)) // Keep last 10 deleted
     }
 
     // Move to next photo
@@ -87,10 +92,10 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
     
     const lastDeleted = recentlyDeleted[recentlyDeleted.length - 1]
     setRecentlyDeleted(prev => prev.slice(0, -1))
-    
-    // In a real app, you'd restore the photo here
-    // For now, we'll just move back one step
-    setCurrentIndex(prev => Math.max(0, prev - 1))
+
+    onPhotoRestored(lastDeleted.photo, lastDeleted.index)
+
+    setCurrentIndex(() => Math.min(lastDeleted.index, Math.max(photos.length - 1, 0)))
   }
 
   const goToPrevious = () => {
