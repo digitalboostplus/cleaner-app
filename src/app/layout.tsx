@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import ClientErrorBoundary from '@/components/ClientErrorBoundary'
+import BrowserCompatibility from '@/components/BrowserCompatibility'
+import SettingsProviderWrapper from '@/components/SettingsProviderWrapper'
+import Settings from '@/components/Settings'
 
 export const metadata: Metadata = {
   title: 'Photo Cleaner - Smart Photo Organization',
@@ -16,10 +17,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-          {children}
-        </main>
+      <body className="font-sans antialiased">
+        <SettingsProviderWrapper>
+          <ClientErrorBoundary>
+            <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+              {children}
+            </main>
+            <BrowserCompatibility />
+            <Settings />
+          </ClientErrorBoundary>
+        </SettingsProviderWrapper>
       </body>
     </html>
   )

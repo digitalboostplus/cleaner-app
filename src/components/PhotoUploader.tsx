@@ -1,10 +1,11 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { Upload, Camera, AlertCircle, Folder, Clipboard } from 'lucide-react'
+import { Upload, Camera, AlertCircle, Folder, Clipboard, AlertTriangle } from 'lucide-react'
 import { Photo } from '@/types'
 import { DevicePhotoManager, loadPhotosFromClipboard, isDevicePhotoAccessSupported } from '@/lib/devicePhotos'
 import { registerObjectUrl } from '@/lib/objectUrlRegistry'
+import { validateFiles, formatBytes, DEFAULT_VALIDATION_CONFIG } from '@/lib/fileValidation'
 import ClientOnly from './ClientOnly'
 
 interface PhotoUploaderProps {
@@ -15,6 +16,7 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   const [deviceManager] = useState(() => new DevicePhotoManager())
   const [isDeviceSupported, setIsDeviceSupported] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -28,16 +30,37 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
 
     setIsUploading(true)
     setError(null)
+    setWarning(null)
 
     try {
+      // Convert FileList to array and filter image files
+      const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'))
+
+      if (fileArray.length === 0) {
+        setError('No valid image files found.')
+        setIsUploading(false)
+        return
+      }
+
+      // Validate files
+      const validationResult = await validateFiles(fileArray)
+      if (!validationResult.isValid) {
+        setError(validationResult.error || 'File validation failed')
+        setIsUploading(false)
+        return
+      }
+
+      // Show warning if approaching limits
+      const totalSize = fileArray.reduce((sum, file) => sum + file.size, 0)
+      const sizePercentage = (totalSize / DEFAULT_VALIDATION_CONFIG.maxTotalSize) * 100
+      if (sizePercentage > 80) {
+        setWarning(`You're using ${sizePercentage.toFixed(0)}% of the maximum upload size (${formatBytes(DEFAULT_VALIDATION_CONFIG.maxTotalSize)})`)
+      }
+
       const photos: Photo[] = []
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        
-        if (!file.type.startsWith('image/')) {
-          continue
-        }
+
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i]
 
         const url = URL.createObjectURL(file)
         registerObjectUrl(url)
@@ -50,7 +73,7 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
           file,
           createdAt: new Date(file.lastModified),
         }
-        
+
         photos.push(photo)
       }
 
@@ -168,6 +191,13 @@ export default function PhotoUploader({ onPhotosUploaded }: PhotoUploaderProps) 
               <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
                 <AlertCircle className="w-5 h-5" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {warning && (
+              <div className="flex items-center gap-2 text-yellow-600 bg-yellow-50 p-3 rounded-lg">
+                <AlertTriangle className="w-5 h-5" />
+                <span>{warning}</span>
               </div>
             )}
           </div>

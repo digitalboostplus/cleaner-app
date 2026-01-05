@@ -15,7 +15,7 @@ export function revokeObjectUrl(url: string) {
   }
 }
 
-export function revokeObjectUrls(urls: Iterable<string>) {
+export function revokeObjectUrls(urls: string[]) {
   for (const url of urls) {
     revokeObjectUrl(url)
   }

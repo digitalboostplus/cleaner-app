@@ -9,9 +9,10 @@ import { Photo } from '@/types'
 interface SwipeInterfaceProps {
   photos: Photo[]
   onPhotoDeleted: (photoId: string) => void
+  onPhotoRestored?: (photo: Photo) => void
 }
 
-export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfaceProps) {
+export default function SwipeInterface({ photos, onPhotoDeleted, onPhotoRestored }: SwipeInterfaceProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [recentlyDeleted, setRecentlyDeleted] = useState<Photo[]>([])
@@ -84,13 +85,14 @@ export default function SwipeInterface({ photos, onPhotoDeleted }: SwipeInterfac
 
   const handleUndo = () => {
     if (recentlyDeleted.length === 0) return
-    
+
     const lastDeleted = recentlyDeleted[recentlyDeleted.length - 1]
     setRecentlyDeleted(prev => prev.slice(0, -1))
-    
-    // In a real app, you'd restore the photo here
-    // For now, we'll just move back one step
-    setCurrentIndex(prev => Math.max(0, prev - 1))
+
+    // Restore the photo
+    if (onPhotoRestored) {
+      onPhotoRestored(lastDeleted)
+    }
   }
 
   const goToPrevious = () => {

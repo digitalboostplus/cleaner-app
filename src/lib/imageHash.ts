@@ -7,7 +7,22 @@ export class ImageHasher {
   constructor() {
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       this.canvas = document.createElement('canvas')
-      this.ctx = this.canvas.getContext('2d')!
+      this.ctx = this.canvas.getContext('2d', { willReadFrequently: true })!
+    }
+  }
+
+  // Clean up canvas resources
+  destroy() {
+    if (this.canvas) {
+      // Clear canvas
+      if (this.ctx) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      }
+      // Remove references
+      this.canvas.width = 0
+      this.canvas.height = 0
+      this.canvas = null
+      this.ctx = null
     }
   }
 
@@ -15,21 +30,30 @@ export class ImageHasher {
     if (!this.canvas || !this.ctx) {
       throw new Error('Canvas not available in SSR environment')
     }
-    
+
     return new Promise((resolve, reject) => {
       const img = new Image()
-      img.crossOrigin = 'anonymous'
-      
+      // Remove crossOrigin for blob URLs (not needed)
+      if (!photo.url.startsWith('blob:')) {
+        img.crossOrigin = 'anonymous'
+      }
+
       img.onload = () => {
         try {
           const hash = this.computePerceptualHash(img)
+          // Clean up image reference
+          img.src = ''
           resolve(hash)
         } catch (error) {
           reject(error)
         }
       }
-      
-      img.onerror = reject
+
+      img.onerror = () => {
+        img.src = ''
+        reject(new Error(`Failed to load image: ${photo.name}`))
+      }
+
       img.src = photo.url
     })
   }
@@ -38,36 +62,39 @@ export class ImageHasher {
     if (!this.canvas || !this.ctx) {
       throw new Error('Canvas not available')
     }
-    
+
     const size = 32
     this.canvas.width = size
     this.canvas.height = size
-    
+
     // Draw image scaled to 32x32
     this.ctx.drawImage(img, 0, 0, size, size)
-    
+
     // Get image data
     const imageData = this.ctx.getImageData(0, 0, size, size)
     const data = imageData.data
-    
+
     // Convert to grayscale and calculate average
     const grayscale: number[] = []
     let total = 0
-    
+
     for (let i = 0; i < data.length; i += 4) {
       const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])
       grayscale.push(gray)
       total += gray
     }
-    
+
     const average = total / grayscale.length
-    
+
     // Create hash based on whether each pixel is above or below average
     let hash = ''
     for (let i = 0; i < grayscale.length; i++) {
       hash += grayscale[i] > average ? '1' : '0'
     }
-    
+
+    // Clear canvas after use to free memory
+    this.ctx.clearRect(0, 0, size, size)
+
     return hash
   }
 
@@ -146,15 +173,16 @@ export async function findSimilarPhotos(photos: Photo[], threshold: number = 0.8
   const hasher = new ImageHasher()
   const hashes: { [key: string]: string } = {}
   const similar: Photo[] = []
-  
-  // Generate hashes for all photos
-  for (const photo of photos) {
-    try {
-      hashes[photo.id] = await hasher.generateHash(photo)
-    } catch (error) {
-      console.error('Error generating hash for photo:', photo.name, error)
+
+  try {
+    // Generate hashes for all photos
+    for (const photo of photos) {
+      try {
+        hashes[photo.id] = await hasher.generateHash(photo)
+      } catch (error) {
+        console.error('Error generating hash for photo:', photo.name, error)
+      }
     }
-  }
   
   // Compare all photos
   const processed = new Set<string>()
@@ -201,6 +229,10 @@ export async function findSimilarPhotos(photos: Photo[], threshold: number = 0.8
 
     processed.add(currentPhoto.id)
   }
-  
+
   return similar
+  } finally {
+    // Clean up hasher resources
+    hasher.destroy()
+  }
 }
