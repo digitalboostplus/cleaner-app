@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Trash2, Sparkles, BarChart3 } from 'lucide-react'
+import { Camera, Trash2, Sparkles, BarChart3, Save, Download } from 'lucide-react'
 import PhotoUploader from '@/components/PhotoUploader'
 import PhotoGrid from '@/components/PhotoGrid'
 import SwipeInterface from '@/components/SwipeInterface'
@@ -10,17 +10,81 @@ import { Photo } from '@/types'
 import { usePhotoAnalysis } from '@/hooks/usePhotoAnalysis'
 import ClientOnly from '@/components/ClientOnly'
 import { revokeObjectUrl } from '@/lib/objectUrlRegistry'
+import { savePhotos, loadPhotos, deletePhoto as deletePhotoFromDB, saveSession, loadLastSession } from '@/lib/storage'
 
 export default function Home() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [currentView, setCurrentView] = useState<'upload' | 'grid' | 'swipe' | 'stats'>('upload')
   const [processedCount, setProcessedCount] = useState(0)
   const [spaceSaved, setSpaceSaved] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const previousBatchRef = useRef<Photo[]>([])
   const latestPhotosRef = useRef<Photo[]>(photos)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const { duplicates, isAnalyzing, progress, getAllDuplicates, getSpaceSavings } = usePhotoAnalysis(photos)
+
+  // Load photos from IndexedDB on mount
+  useEffect(() => {
+    const loadSavedData = async () => {
+      try {
+        const savedPhotos = await loadPhotos()
+        const lastSession = await loadLastSession()
+
+        if (savedPhotos.length > 0) {
+          setPhotos(savedPhotos)
+          setCurrentView('grid')
+        }
+
+        if (lastSession) {
+          setProcessedCount(lastSession.processedCount)
+          setSpaceSaved(lastSession.spaceSaved)
+        }
+      } catch (error) {
+        console.error('Error loading saved data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadSavedData()
+  }, [])
+
+  // Auto-save photos when they change
+  useEffect(() => {
+    if (isLoading) return
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+
+    // Set new timer to save after 2 seconds of inactivity
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true)
+        await savePhotos(photos)
+        await saveSession({
+          id: 'current',
+          photoCount: photos.length,
+          processedCount,
+          spaceSaved,
+        })
+      } catch (error) {
+        console.error('Error auto-saving:', error)
+      } finally {
+        setIsSaving(false)
+      }
+    }, 2000)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [photos, processedCount, spaceSaved, isLoading])
 
   const handlePhotosUploaded = (newPhotos: Photo[]) => {
     previousBatchRef.current = photos
@@ -28,14 +92,27 @@ export default function Home() {
     setCurrentView('grid')
   }
 
-  const handlePhotoDeleted = (photoId: string) => {
+  const handlePhotoDeleted = async (photoId: string) => {
     const deletedPhoto = photos.find(p => p.id === photoId)
     if (deletedPhoto) {
       revokeObjectUrl(deletedPhoto.url)
       setSpaceSaved(prev => prev + deletedPhoto.size)
+
+      // Delete from IndexedDB
+      try {
+        await deletePhotoFromDB(photoId)
+      } catch (error) {
+        console.error('Error deleting photo from DB:', error)
+      }
     }
     setPhotos(prev => prev.filter(p => p.id !== photoId))
     setProcessedCount(prev => prev + 1)
+  }
+
+  const handlePhotoRestored = (photo: Photo) => {
+    setPhotos(prev => [...prev, photo])
+    setSpaceSaved(prev => Math.max(0, prev - photo.size))
+    setProcessedCount(prev => Math.max(0, prev - 1))
   }
 
   useEffect(() => {
@@ -71,6 +148,12 @@ export default function Home() {
         <div className="mb-4 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
           <Camera className="h-8 w-8 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-800 sm:text-4xl">Photo Cleaner</h1>
+          {isSaving && (
+            <span className="flex items-center gap-2 text-sm text-gray-600">
+              <Save className="w-4 h-4 animate-pulse" />
+              Saving...
+            </span>
+          )}
         </div>
         <p className="mx-auto max-w-2xl text-base text-gray-600 sm:text-lg">
           Clean up your photo library with AI-powered duplicate detection and smart organization
@@ -155,7 +238,11 @@ export default function Home() {
         )}
         {currentView === 'swipe' && (
           <ClientOnly fallback={<div className="h-96 bg-gray-50 rounded-lg animate-pulse"></div>}>
-            <SwipeInterface photos={photos} onPhotoDeleted={handlePhotoDeleted} />
+            <SwipeInterface
+              photos={photos}
+              onPhotoDeleted={handlePhotoDeleted}
+              onPhotoRestored={handlePhotoRestored}
+            />
           </ClientOnly>
         )}
         {currentView === 'stats' && (
